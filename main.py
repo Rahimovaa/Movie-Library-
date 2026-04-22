@@ -6,14 +6,16 @@ import os
 from password_generator import generate_password
 
 HISTORY_FILE = 'history.json'
+MAX_HISTORY = 20
 
 class PasswordGeneratorApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Генератор случайных паролей")
         self.root.geometry("500x500")
-        self.setup_ui()
+        self.history = []
         self.load_history()
+        self.setup_ui()
 
     def setup_ui(self):
         # Настройки пароля
@@ -56,6 +58,7 @@ class PasswordGeneratorApp:
         if not (self.use_letters.get() or self.use_digits.get() or self.use_special.get()):
             messagebox.showerror("Ошибка", "Выберите хотя бы один тип символов")
             return
+
         try:
             password = generate_password(
                 length=self.length_var.get(),
@@ -65,8 +68,8 @@ class PasswordGeneratorApp:
             )
             self.password_var.set(password)
             self.add_to_history(password)
-            self.save_history()
             self.update_history_list()
+            self.save_history()
         except Exception as e:
             messagebox.showerror("Ошибка", str(e))
 
@@ -77,14 +80,9 @@ class PasswordGeneratorApp:
             messagebox.showinfo("Успех", "Пароль скопирован в буфер обмена")
 
     def add_to_history(self, password):
-        if not os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, 'w') as f:
-                json.dump([], f)
-        with open(HISTORY_FILE, 'r') as f:
-            history = json.load(f)
-        history.append(password)
-        # Оставляем только последние 20 паролей
-        history = history[-20:]
+        self.history.append(password)
+        if len(self.history) > MAX_HISTORY:
+            self.history.pop(0)
 
     def save_history(self):
         with open(HISTORY_FILE, 'w') as f:
@@ -100,3 +98,9 @@ class PasswordGeneratorApp:
         self.history_list.delete(0, tk.END)
         for p in self.history:
             self.history_list.insert(tk.END, p)
+
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    app = PasswordGeneratorApp(root)
+    root.mainloop()
